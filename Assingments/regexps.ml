@@ -154,14 +154,14 @@ http://ocaml-batteries-team.github.io/batteries-included/hdoc2/BatList.html.
 
  *)
 
-let rec my_splits (s : 'char list) (n : int) : ('char list * 'char list) list = 
+let rec splits (s : 'char list) (n : int) : ('char list * 'char list) list = 
   match n with
   | 0 ->  BatList.takedrop n s :: []
-  | n -> BatList.takedrop n s :: my_splits s (n-1) 
+  | n -> BatList.takedrop n s :: splits s (n-1) 
 ;;
 
 let all_splits (s : 'char list) : ('char list * 'char list) list =
-  my_splits s (BatList.length s)
+  splits s (BatList.length s)
 ;;
 
 (* A test input: *)
@@ -188,12 +188,25 @@ let all_splits (s : 'char list) : ('char list * 'char list) list =
  *)
 
 let rec interp (r : 'char regexp) : 'char language =
-  (* FILL IN DEFINITION HERE *) fun _ -> false
+  match r with
+  | Empty -> fun my_string -> false
+  | Epsilon -> fun my_string -> if my_string = [] then true else false
+  | Char x -> fun my_string -> if my_string = [x] then true else false
+  | Concat (x, y) -> fun my_string -> let (hd, tail) = BatList.takedrop 1 my_string in 
+    if (interp x hd && interp y tail) then true else false
+(*
+  | Star x -> fun s ->  
+*)
+  | Or (x, y) -> fun my_string -> if interp x my_string then true else if interp y my_string then true else false
+  | And (x, y) -> fun my_string -> if interp x my_string && interp y my_string then true else false
+  | Not x -> fun my_string -> if interp x my_string then false else true
+  | _ -> fun _ -> false
+;;
 
-let string_interp (r : char regexp)
-    : string -> bool =
+
+let string_interp (r : char regexp) : string -> bool =
   fun s -> interp r (BatString.to_list s)
-
+;;
 (* EXERCISE 4: 
 
    The test harness below provides a generic mechanism for testing an
@@ -219,15 +232,27 @@ let test1 (interp : char regexp -> string -> bool) (e : expectedResult) (r : cha
   | (false, Fail) -> print_result "fail"
 		     
 let test (testfun : expectedResult -> char regexp -> string -> 'a) : unit =
-  let _ =
-    BatList.map
-      (fun (e,r,s) -> testfun e r s)
-      [ (Fail, Empty, "abcde"); (* we expect the Empty regexp to fail on string "abcde" *)
-	(Fail, Epsilon, "abcde"); 
-	(Pass, Epsilon, ""); (* we expect Epsilon to succeed on "" *)
-	(Pass, string_to_re "a", "a");
-	(Pass, string_to_re "abc", "abc");
-      ]
+  let _ = BatList.map (fun (e,r,s) -> testfun e r s)
+  [ 
+    (Fail, Empty, "abcde"); (* we expect the Empty regexp to fail on string "abcde" *)
+  	(Fail, Epsilon, "abcde"); 
+  	(Pass, Epsilon, ""); (* we expect Epsilon to succeed on "" *)
+  	(Pass, string_to_re "a", "a");
+  	(Pass, string_to_re "abc", "abc");
+    (Pass, Char 'a', "a");  (* 1 *)
+    (Fail, Epsilon, "");    (* 2 *)
+    (Fail, Char 'a', "a");  (* 3 *)
+    (Pass, Concat(string_to_re "ab", string_to_re "a"), "aba"); (* 4 *)
+    (Pass, Concat(string_to_re "ab", string_to_re "a"), "ab");  (* 5 *)
+    (Pass, Not(Char 'a'), "a"); (* 6 *)
+    (Fail, Not(Char 'a'), "a"); (* 7 *)
+    (Pass, And(Char 'a', Char 'a'), "a"); (* 8 *)
+    (Fail, And(Char 'a', Char 'a'), "a"); (* 9 *)
+    (Pass, Or(Char 'a', Char 'b'), "a");  (* 10 *)
+    (Pass, Or(Char 'a', Char 'b'), "b");  (* 11 *)
+    (Pass, Or(Char 'a', Char 'b'), "c");  (* 12 *)
+    (Fail, Or(Char 'a', Char 'b'), "a");  (* 13 *)
+  ]
   in ();;
   
 test (test1 string_interp);;  
@@ -335,4 +360,4 @@ string_matches (Star (Char 'a')) "";; (*expected output: true*)
 string_matches (Star (Char 'a')) "aaa";; (*expected output: true*)
 string_matches (Star (Char 'a')) "aba";; (*expected output: false*)          
   
-test (test1 string_matches);;
+(* test (test1 string_matches);; *)
