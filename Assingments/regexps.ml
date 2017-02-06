@@ -1,4 +1,4 @@
-(* A2: regexps.ml *)
+(*A2: regexps.ml *)
 
 (** EXERCISE 0: Fill out the following README: *)
 
@@ -187,22 +187,43 @@ let all_splits (s : 'char list) : ('char list * 'char list) list =
 
  *)
 
+let rec myOtherStar (my_match: 'char list) (rest: 'char list): bool = 
+  match rest with 
+  | [] -> true
+  | elem::tail -> 
+    let x = BatList.length my_match in
+    let test = BatList.takedrop x rest in
+    let (h, t) = test in
+    if my_match = h then myOtherStar my_match t else false
+;;
+
 let rec interp (r : 'char regexp) : 'char language =
   match r with
   | Empty -> fun my_string -> false
   | Epsilon -> fun my_string -> if my_string = [] then true else false
   | Char x -> fun my_string -> if my_string = [x] then true else false
-  | Concat (x, y) -> fun my_string -> let (hd, tail) = BatList.takedrop 1 my_string in 
-    if (interp x hd && interp y tail) then true else false
-(*
+  | Concat (x, y) -> fun my_string -> 
+      my_concat x y (all_splits my_string)
   | Star x -> fun s ->  
-*)
+    my_star x (all_splits s)
   | Or (x, y) -> fun my_string -> if interp x my_string then true else if interp y my_string then true else false
   | And (x, y) -> fun my_string -> if interp x my_string && interp y my_string then true else false
   | Not x -> fun my_string -> if interp x my_string then false else true
   | _ -> fun _ -> false
-;;
 
+and my_concat (x: 'char regexp) (y: 'char regexp) (perm_list : ('char list * 'char list) list ): bool = 
+  match perm_list with 
+  | [] -> false
+  | head::tail -> 
+    let (h, t) = head in 
+    if interp x h && interp y t then true else my_concat x y tail
+
+and my_star (x: 'char regexp) (perm_list : ('char list * 'char list) list ): bool = 
+  match perm_list with 
+  | [] -> false
+  | head::tail -> 
+    let (h, t) = head in 
+    if interp x h then myOtherStar h t else my_star x tail
 
 let string_interp (r : char regexp) : string -> bool =
   fun s -> interp r (BatString.to_list s)
@@ -252,6 +273,9 @@ let test (testfun : expectedResult -> char regexp -> string -> 'a) : unit =
     (Pass, Or(Char 'a', Char 'b'), "b");  (* 11 *)
     (Pass, Or(Char 'a', Char 'b'), "c");  (* 12 *)
     (Fail, Or(Char 'a', Char 'b'), "a");  (* 13 *)
+    (Pass, Star(Char 'a'), "aaa"); (*14 *)
+    (Fail, Star(Char 'a'), "aba"); (*15 *)
+    (Pass, Star(Concat(Char 'a', Epsilon)), "a"); (*16*)
   ]
   in ();;
   
@@ -360,4 +384,4 @@ string_matches (Star (Char 'a')) "";; (*expected output: true*)
 string_matches (Star (Char 'a')) "aaa";; (*expected output: true*)
 string_matches (Star (Char 'a')) "aba";; (*expected output: false*)          
   
-(* test (test1 string_matches);; *)
+(* test (test1 string_matches);;*)
