@@ -7,6 +7,16 @@ open Lexer
 open AST
 open Exp
 
+(* 
+
+  Name: Gabriel Lopez-Matthews
+  OUID: p001235175
+  I worked with Rhen Daffin on this assignment
+
+*)
+
+
+
 (** Declare a new exception type, Ty_error, which takes as 
     its first argument a message describing the type error *)
        
@@ -56,8 +66,16 @@ let is_bound (gamma : ty_env) (x : id) : bool =
 		    
 let rec tycheck (gamma : ty_env) (e : 'a exp) : ty exp =
   match e.exp_of with
-  | EInt i -> { e with exp_of = EInt i; ety_of = TyInt }
-  | EFloat f -> { e with exp_of = EFloat f; ety_of = TyFloat }
+  | EInt    i   ->  { e with exp_of = EInt i;   ety_of = TyInt }
+  | EFloat  f   ->  { e with exp_of = EFloat f; ety_of = TyFloat }
+  | EBool   b   ->  { e with exp_of = EBool b;  ety_of = TyBool }
+  | EUnop(u, e1)  ->
+      let t1 = tycheck gamma e1 in 
+      (match (u, t1) with 
+        | (UNot, TyBool)  -> { e with exp_of = EBool t1; ety_of = TyBool}
+        | (UNot, _)       -> raise Static_type_error (*This might need to be different*)
+      )
+  | EBinop(b, e1, e2) -> 
   | EId x -> 
      (match Symtab.get x gamma with
       | None ->
