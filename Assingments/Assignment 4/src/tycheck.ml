@@ -9,9 +9,11 @@ open Exp
 
 (* 
 
-  Name: Gabriel Lopez-Matthews
-  OUID: p001235175
-  I worked with Rhen Daffin on this assignment
+  Name: Gabriel Lopez-Matthews 
+  OUID: P001235175
+
+  Name: Rhen Daffin
+  OUID: P100189836
 
 *)
 
@@ -64,40 +66,55 @@ let is_bound (gamma : ty_env) (x : id) : bool =
     the [ety_of] field -- see type ['a exp] in [exp.mli] for 
     additional information). *)
 		    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 let rec tycheck (gamma : ty_env) (e : 'a exp) : ty exp =
   match e.exp_of with
   | EInt    i   ->  { e with exp_of = EInt i;   ety_of = TyInt }
   | EFloat  f   ->  { e with exp_of = EFloat f; ety_of = TyFloat }
-  | EBool   b   ->  { e with exp_of = EBool b;  ety_of = TyBool }
-  | EUnop(u, e1)  ->
-      let t1 = tycheck gamma e1 in 
-      (match (u, t1) with 
-        | (UNot, TyBool)  -> { e with exp_of = EBool t1; ety_of = TyBool}
-        | (UNot, _)       -> raise Static_type_error (*This might need to be different*)
-      )
-  | EBinop(b, e1, e2) -> 
-    let t1 = tycheck gamma e1 in 
-    let t2 = tycheck gamma e2 in
-    tycheck_binop b t1 t2
   | EId x -> 
      (match Symtab.get x gamma with
-      | None ->
-	 raise_ty_err
-	   (pp_to_string (fun ppf -> fprintf ppf "unbound identifier '%a'@ at position %a" 
-					     pp_id x pp_pos e))
-      | Some t -> 
-	 { e with 
-             exp_of = EId x; 
-             ety_of = t
-          })
-  | _ -> raise_ty_err "Unimplemented"
+      | None -> raise_ty_err (pp_to_string (fun ppf -> fprintf ppf "unbound identifier '%a'@ at position %a" pp_id x pp_pos e))
+      | Some t -> { e with exp_of = EId x; ety_of = t })
+  | ESeq    ->  raise_ty_err "Unimplemented"
+  | ECall   ->  raise_ty_err "Unimplemented"
+  | ERef    ->  raise_ty_err "Unimplemented"
+  | EUnop(u, e1)      -> tycheck_unop e gamma u e1
+  | EBinop(b, e1, e2) -> tycheck_binop e gamma b e1 e2
+  | EIf     ->  raise_ty_err "Unimplemented"
+  | ELet    ->  raise_ty_err "Unimplemented"
+  | EScope  ->  raise_ty_err "Unimplemented"
+  | EUnit   ->  raise_ty_err "Unimplemented"
+  | ETrue   ->  raise_ty_err "Unimplemented"
+  | EFalse  ->  raise_ty_err "Unimplemented"
+  | EWhile  ->  raise_ty_err "Unimplemented"
+  
 
 (** [assert_ty gamma e t]: Raise a type error if [e] does not 
     have type [t] in [gamma]. Returns a type-annotated version 
     of [e] (just as in [tycheck]) *)
 	  
 and assert_ty (gamma : ty_env) (e : 'a exp) (t : ty) : ty exp =
-  raise_ty_err "Unimplemented"  
+  let t1 = tycheck gamma e in 
+  (* if is_arith_ty t1   *)
+  raise_ty_err "Unimplemented"
 
 (** [assert_arith gamma e]: Raise a type error if [e] does not have an
     arithmetic type (see [exp.ml] and [exp.mli] for the definition of
@@ -105,20 +122,23 @@ and assert_ty (gamma : ty_env) (e : 'a exp) (t : ty) : ty exp =
     (just as in [tycheck]) *)
 	    
 and assert_arith (gamma : ty_env) (e : 'a exp) : ty exp =
-  raise_ty_err "Unimplemented"    
-
+  raise_ty_err "Unimplemented"
 (** [tycheck_unop e gamma u e2]: 
     Assumes [e = EUnop(u, e2)]. 
     Checks that [EUnop(u, e2)] is well-typed in [gamma].
     Returns a type-annotated version of [e]. *)
 		  
-and tycheck_unop (e : 'a exp) (gamma : ty_env) (u : unop) (e2 : 'a exp) : ty exp =
-  raise_ty_err "Unimplemented"      
 
+and tycheck_unop (e : 'a exp) (gamma : ty_env) (u : unop) (e2 : 'a exp) : ty exp = 
 (** [tycheck_binop e gamma b e1 e2]: 
     Assumes [e = EBinop(b, e1, e2)]. 
     Checks that [EBinop(b, e1, e2)] is well-typed in [gamma].
     Returns a type-annotated version of [e]. *)
+  match u with 
+  | UNot    ->  raise_ty_err "Unimplemented"     
+  | UMinus  ->  raise_ty_err "Unimplemented"  
+  | UDeref  ->  raise_ty_err "Unimplemented" 
+
 		  
 and tycheck_binop (e : 'a exp) (gamma : ty_env)
                   (b : binop) (e1 : 'a exp) (e2 : 'a exp) : ty exp =
