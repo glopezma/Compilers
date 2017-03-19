@@ -71,22 +71,35 @@ let rec tycheck (gamma : ty_env) (e : 'a exp) : ty exp =
   match e.exp_of with
   | EInt    i   ->  { e with exp_of = EInt i;   ety_of = TyInt }
   | EFloat  f   ->  { e with exp_of = EFloat f; ety_of = TyFloat }
-  | EId x -> 
-     (match Symtab.get x gamma with
-      | None -> raise_ty_err (pp_to_string (fun ppf -> fprintf ppf "unbound identifier '%a'@ at position %a" pp_id x pp_pos e))
-      | Some t -> { e with exp_of = EId x; ety_of = t })
-  (* | ESeq    ->  raise_ty_err "Unimplemented"
-  | ECall   ->  raise_ty_err "Unimplemented"
-  | ERef    ->  raise_ty_err "Unimplemented" *)
-  | EUnop(u, e1)      -> tycheck_unop e gamma u e1
-  | EBinop(b, e1, e2) -> tycheck_binop e gamma b e1 e2
-  (* | EIf     ->  raise_ty_err "Unimplemented"
-  | ELet    ->  raise_ty_err "Unimplemented"
-  | EScope  ->  raise_ty_err "Unimplemented" *)
+  | EId x       ->  (match Symtab.get x gamma with
+                      | None -> raise_ty_err (pp_to_string (fun ppf -> fprintf ppf "unbound identifier '%a'@ at position %a" pp_id x pp_pos e))
+                      | Some t -> { e with exp_of = EId x; ety_of = t })
+  (* | ESeq    ->  raise_ty_err "Unimplemented" *)
+  (* | ECall   ->  raise_ty_err "Unimplemented" *)
+  | ERef x  ->  let x' = tycheck gamma x in {e with exp_of = ERef x';   ety_of = TyRef x'.ety_of}
+  | EUnop (u, e1)      -> tycheck_unop e gamma u e1
+  | EBinop (b, e1, e2) -> tycheck_binop e gamma b e1 e2
+  (* | EIf    ->  raise_ty_err "Unimplemented" *)
+  | ELet (i, e1, e2)    -> let e1' = tycheck gamma e1 in
+                          let e2' = tycheck (Symtab.set i e1'.ety_of gamma) e2 in (*Should have some sort of check for bounding errors*)
+                          {e with 
+                            exp_of = ELet(i, e1', e2');
+                            ety_of = e2'.ety_of
+                          }
+  | EScope e1  ->   let e1' = tycheck gamma e1 in
+                    { e with
+                      exp_of = EScope e1';
+                      ety_of = e1'.ety_of
+                    }
   | EUnit   ->  { e with exp_of = EUnit;    ety_of = TyUnit }
   | ETrue   ->  { e with exp_of = ETrue;    ety_of = TyBool }
   | EFalse  ->  { e with exp_of = EFalse;   ety_of = TyBool }
-  (* | EWhile  ->  raise_ty_err "Unimplemented" *)
+  | EWhile(e1, e2)  ->  let e1' = assert_ty gamma e1 TyBool in 
+                        let e2' = assert_ty gamma e2 TyUnit in 
+                        { e with 
+                          exp_of = EWhile(e1', e2');
+                          ety_of = TyUnit
+                        }
   | _ -> raise_ty_err "Unimplemented"
   
 
@@ -141,7 +154,7 @@ and tycheck_unop (e : 'a exp) (gamma : ty_env) (u : unop) (e2 : 'a exp) : ty exp
                     exp_of = EUnop(u, e');
                     ety_of = e'.ety_of
                   }
-  | UDeref  ->  let e' = techeck gamma e2 in (*BEFORE WE TURN IN, FIGURE OUT HOW OTHER PEOPLE SOLVED THIS, WE NO ABLE TO SOLVE CUZ DUMB*)
+  | UDeref  ->  let e' = tycheck gamma e2 in (*BEFORE WE TURN IN, FIGURE OUT HOW OTHER PEOPLE SOLVED THIS, WE NO ABLE TO SOLVE CUZ DUMB*)
                   (match e'.ety_of with 
                     | TyRef(e2) -> 
                                 { e with
