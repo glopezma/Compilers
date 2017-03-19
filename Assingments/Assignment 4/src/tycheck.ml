@@ -121,7 +121,7 @@ and assert_arith (gamma : ty_env) (e : 'a exp) : ty exp =
     let e' = tycheck gamma e in 
       if ty_eq e'.ety_of TyInt then e' 
       else if ty_eq e'.ety_of TyFloat then e'
-      else raise_ty_err "Wasn\'t of type Float or Int"
+      else raise_ty_err "Expected Float or Int"
 		  
 
 and tycheck_unop (e : 'a exp) (gamma : ty_env) (u : unop) (e2 : 'a exp) : ty exp = 
@@ -141,7 +141,15 @@ and tycheck_unop (e : 'a exp) (gamma : ty_env) (u : unop) (e2 : 'a exp) : ty exp
                     exp_of = EUnop(u, e');
                     ety_of = e'.ety_of
                   }
-  | UDeref  ->  raise_ty_err "Unimplemented" 
+  | UDeref  ->  let e' = techeck gamma e2 in (*BEFORE WE TURN IN, FIGURE OUT HOW OTHER PEOPLE SOLVED THIS, WE NO ABLE TO SOLVE CUZ DUMB*)
+                  (match e'.ety_of with 
+                    | TyRef(e2) -> 
+                                { e with
+                                    exp_of = EUnop(u, e');
+                                    ety_of = e2
+                                }
+                    | e -> raise_ty_err "Expected reference type!"
+                  )
 
 		  
 and tycheck_binop (e : 'a exp) (gamma : ty_env)
