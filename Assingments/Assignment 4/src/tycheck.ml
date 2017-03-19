@@ -76,6 +76,9 @@ let rec tycheck (gamma : ty_env) (e : 'a exp) : ty exp =
         | (UNot, _)       -> raise Static_type_error (*This might need to be different*)
       )
   | EBinop(b, e1, e2) -> 
+    let t1 = tycheck gamma e1 in 
+    let t2 = tycheck gamma e2 in
+    tycheck_binop b t1 t2
   | EId x -> 
      (match Symtab.get x gamma with
       | None ->
