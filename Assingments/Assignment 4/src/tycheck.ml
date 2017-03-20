@@ -65,12 +65,22 @@ let is_bound (gamma : ty_env) (x : id) : bool =
 
 let rec tycheck (gamma : ty_env) (e : 'a exp) : ty exp =
   match e.exp_of with
-  | EInt    i   ->  { e with exp_of = EInt i;   ety_of = TyInt }
-  | EFloat  f   ->  { e with exp_of = EFloat f; ety_of = TyFloat }
-  | EId x       ->  (match Symtab.get x gamma with
-                      | None -> raise_ty_err (pp_to_string (fun ppf -> fprintf ppf "unbound identifier '%a'@ at position %a" pp_id x pp_pos e)) (*GO THROUGH LATER TO FILL THIS IN INSTEAD OF STUPID WARNING ^^ MUCH BETTER WARNINGS*)
-                      | Some t -> { e with exp_of = EId x; ety_of = t })
-  (* | ESeq    ->  raise_ty_err "Unimplemented" *)
+  | EInt i   ->  { e with exp_of = EInt i;   ety_of = TyInt }
+  | EFloat f ->  { e with exp_of = EFloat f; ety_of = TyFloat }
+  | EId x    ->  (match Symtab.get x gamma with
+                  | None -> raise_ty_err (pp_to_string (fun ppf -> fprintf ppf "unbound identifier '%a'@ at position %a" pp_id x pp_pos e)) (*GO THROUGH LATER TO FILL THIS IN INSTEAD OF STUPID WARNING ^^ MUCH BETTER WARNINGS*)
+                  | Some t -> { e with exp_of = EId x; ety_of = t })
+  | ESeq ((h::t) e1 e2) ->  let (head, tail) = 
+                            ( match BatList.rev e2 with 
+                            | [] -> raise_ty_err
+                            | (head::tail) -> (tail, head) )
+                            in let head' = BatList.map (fun x -> assert_ty gamma x TyUnit)
+                            (BatList.rev head) in
+                            let tail' = tycheck gamma tail in
+                            { x with 
+                              exp_of = ESeq ( head' @  [tail'] );
+                              ety_of = tail'.ety_of
+                            }
 
   (*Fix later because this is too close to Nathan's and Bailey's answer *)
   | ECall (x, y)  ->  let (argList, argType) = ety_of_funid x in
@@ -164,7 +174,7 @@ and tycheck_unop (e : 'a exp) (gamma : ty_env) (u : unop) (e2 : 'a exp) : ty exp
                     exp_of = EUnop(u, e');
                     ety_of = e'.ety_of
                   }
-  | UDeref  ->  let e' = tycheck gamma e2 in (*BEFORE WE TURN IN, FIGURE OUT HOW OTHER PEOPLE SOLVED THIS, WE NO ABLE TO SOLVE CUZ DUMB*)
+  | UDeref  ->  let e' = tycheck gamma e2 in 
                   (match e'.ety_of with 
                     | TyRef(x) -> 
                                 { e with
