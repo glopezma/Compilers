@@ -276,7 +276,13 @@ and tycheck_binop (e : 'a exp) (gamma : ty_env) (b : binop) (e1 : 'a exp) (e2 : 
     Returns a type-annotated version of [f]. *)
 	 
 let tycheck_fundef (f : (ty, 'a exp) fundef) : (ty, ty exp) fundef =
-  raise_ty_err "Unimplemented fundef"         
+  let gamma = List.fold_left 
+  (fun m i -> Symtab.set i.id_of i.ty_of m)
+  (Symtab.create()) 
+  f.args in
+  try {f with body = assert_ty gamma f.body f.ret_ty} 
+  with
+  | Ty_error errorMessage -> raise_ty_err "Fundef Error!"
 
 
 (** [tycheck_prog p]:
@@ -287,5 +293,3 @@ let tycheck_prog (p : (ty, 'a exp) prog) : (ty, ty exp) prog =
   let typ = tycheck (Symtab.create ()) p.result in
   { fundefs = [];
     result = typ }
-(* Using algorithm found on stack overflow *)
-(* let size l = mylist.fold_left (fun acc _ -> acc + 1) 0 l;; *)
