@@ -70,14 +70,14 @@ let rec tycheck (gamma : ty_env) (e : 'a exp) : ty exp =
   | EId x    ->  (match Symtab.get x gamma with
                   | None -> raise_ty_err (pp_to_string (fun ppf -> fprintf ppf "unbound identifier '%a'@ at position %a" pp_id x pp_pos e)) (*GO THROUGH LATER TO FILL THIS IN INSTEAD OF STUPID WARNING ^^ MUCH BETTER WARNINGS*)
                   | Some t -> { e with exp_of = EId x; ety_of = t })
-  | ESeq ((h::t) e1 e2) ->  let (head, tail) = 
-                            ( match BatList.rev e2 with 
-                            | [] -> raise_ty_err
+  | ESeq ((_ :: _) as e2) ->  let (head, tail) = 
+                            (match BatList.rev e2 with 
+                            | [] -> raise_ty_err "Can't have an empty list, Bro!"
                             | (head::tail) -> (tail, head) )
-                            in let head' = BatList.map (fun x -> assert_ty gamma x TyUnit)
+                            in let head' = BatList.map (fun e -> assert_ty gamma e TyUnit)
                             (BatList.rev head) in
                             let tail' = tycheck gamma tail in
-                            { x with 
+                            { e with 
                               exp_of = ESeq ( head' @  [tail'] );
                               ety_of = tail'.ety_of
                             }

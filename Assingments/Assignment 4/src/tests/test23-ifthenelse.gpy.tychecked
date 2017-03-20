@@ -1,3 +1,5 @@
 
-(tt : unit)
+((if (false : bool) then ((let x = (3 : int) in (x : int)) : int) else
+((if (true : bool) then ((let x = (27 : int) in
+(((x : int) + (x : int)) : int)) : int) else (45 : int)) : int)) : int)
 
