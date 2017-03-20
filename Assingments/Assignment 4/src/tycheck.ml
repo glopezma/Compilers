@@ -71,7 +71,15 @@ let rec tycheck (gamma : ty_env) (e : 'a exp) : ty exp =
                       | None -> raise_ty_err (pp_to_string (fun ppf -> fprintf ppf "unbound identifier '%a'@ at position %a" pp_id x pp_pos e)) (*GO THROUGH LATER TO FILL THIS IN INSTEAD OF STUPID WARNING ^^ MUCH BETTER WARNINGS*)
                       | Some t -> { e with exp_of = EId x; ety_of = t })
   (* | ESeq    ->  raise_ty_err "Unimplemented" *)
-  (* | ECall   ->  raise_ty_err "Unimplemented" *)
+
+  (*Fix later because this is too close to Nathan's and Bailey's answer *)
+  | ECall (x, y)  ->  let (argList, argType) = ety_of_funid x in
+                      let y' = BatList.map2 (fun i j -> assert_ty gamma i j) y argList in
+                      { e with
+                        exp_of = ECall (x, y');
+                        ety_of = argType
+                      }
+                        
   | ERef x  ->  let x' = tycheck gamma x in {e with exp_of = ERef x';   ety_of = TyRef x'.ety_of}
   | EUnop (u, e1)      -> tycheck_unop e gamma u e1
   | EBinop (b, e1, e2) -> tycheck_binop e gamma b e1 e2
@@ -256,3 +264,6 @@ let tycheck_fundef (f : (ty, 'a exp) fundef) : (ty, ty exp) fundef =
 		  
 let tycheck_prog (p : (ty, 'a exp) prog) : (ty, ty exp) prog =
   raise_ty_err "Unimplemented prog"            
+
+(* Using algorithm found on stack overflow *)
+let size l = mylist.fold_left (fun acc _ -> acc + 1) 0 l;;
