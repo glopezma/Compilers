@@ -277,7 +277,5 @@ let tycheck_prog (p : (ty, 'a exp) prog) : (ty, ty exp) prog =
   let typ = tycheck (Symtab.create ()) p.result in
   { fundefs = [];
     result = typ }
-  raise_ty_err "Unimplemented prog"            
-
 (* Using algorithm found on stack overflow *)
-let size l = mylist.fold_left (fun acc _ -> acc + 1) 0 l;;
+(* let size l = mylist.fold_left (fun acc _ -> acc + 1) 0 l;; *)
