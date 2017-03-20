@@ -8,15 +8,12 @@ open AST
 open Exp
 
 (* 
-
   Name: Gabriel Lopez-Matthews 
   OUID: P001235175
 
   Name: Rhen Daffin
   OUID: P100189836
-
 *)
-
 
 
 (** Declare a new exception type, Ty_error, which takes as 
@@ -66,7 +63,6 @@ let is_bound (gamma : ty_env) (x : id) : bool =
     the [ety_of] field -- see type ['a exp] in [exp.mli] for 
     additional information). *)
 
-
 let rec tycheck (gamma : ty_env) (e : 'a exp) : ty exp =
   match e.exp_of with
   | EInt    i   ->  { e with exp_of = EInt i;   ety_of = TyInt }
@@ -75,12 +71,27 @@ let rec tycheck (gamma : ty_env) (e : 'a exp) : ty exp =
                       | None -> raise_ty_err (pp_to_string (fun ppf -> fprintf ppf "unbound identifier '%a'@ at position %a" pp_id x pp_pos e)) (*GO THROUGH LATER TO FILL THIS IN INSTEAD OF STUPID WARNING ^^ MUCH BETTER WARNINGS*)
                       | Some t -> { e with exp_of = EId x; ety_of = t })
   (* | ESeq    ->  raise_ty_err "Unimplemented" *)
-  (* | ECall   ->  raise_ty_err "Unimplemented" *)
+
+  (*Fix later because this is too close to Nathan's and Bailey's answer *)
+  | ECall (x, y)  ->  let (argList, argType) = ety_of_funid x in
+                      let y' = BatList.map2 (fun i j -> assert_ty gamma i j) y argList in
+                      { e with
+                        exp_of = ECall (x, y');
+                        ety_of = argType
+                      }
+                        
   | ERef x  ->  let x' = tycheck gamma x in {e with exp_of = ERef x';   ety_of = TyRef x'.ety_of}
   | EUnop (u, e1)      -> tycheck_unop e gamma u e1
   | EBinop (b, e1, e2) -> tycheck_binop e gamma b e1 e2
-  (* | EIf    ->  raise_ty_err "Unimplemented" *)
-  | ELet (i, e1, e2)    -> let e1' = tycheck gamma e1 in
+  | EIf (e1, e2, e3)  ->  let e1' = assert_ty gamma e1 TyBool in
+                          let e2' = tycheck gamma e2 in
+                          let e3' = assert_ty gamma e3 e2'.ety_of in
+                          { e with 
+                            exp_of = EIf(e1', e2', e3');
+                            ety_of = e3'.ety_of
+                          }
+
+  | ELet (i, e1, e2)  ->  let e1' = tycheck gamma e1 in
                           let e2' = tycheck (Symtab.set i e1'.ety_of gamma) e2 in (*Should have some sort of check for bounding errors*)
                           {e with 
                             exp_of = ELet(i, e1', e2');
@@ -263,6 +274,13 @@ let tycheck_fundef (f : (ty, 'a exp) fundef) : (ty, ty exp) fundef =
     Returns a type-annotated version of [p]. *)
 (* Given by Alexander Bagnall in the Piazza group chat *)
 let tycheck_prog (p : (ty, 'a exp) prog) : (ty, ty exp) prog =
+<<<<<<< HEAD
   let typ = tycheck (Symtab.create ()) p.result in
   { fundefs = [];
     result = typ }
+=======
+  raise_ty_err "Unimplemented prog"            
+
+(* Using algorithm found on stack overflow *)
+let size l = mylist.fold_left (fun acc _ -> acc + 1) 0 l;;
+>>>>>>> d45ea80ab917a41d2f8221518c618605f28d8ecb
