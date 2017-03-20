@@ -8,15 +8,12 @@ open AST
 open Exp
 
 (* 
-
   Name: Gabriel Lopez-Matthews 
   OUID: P001235175
 
   Name: Rhen Daffin
   OUID: P100189836
-
 *)
-
 
 
 (** Declare a new exception type, Ty_error, which takes as 
@@ -66,7 +63,6 @@ let is_bound (gamma : ty_env) (x : id) : bool =
     the [ety_of] field -- see type ['a exp] in [exp.mli] for 
     additional information). *)
 
-
 let rec tycheck (gamma : ty_env) (e : 'a exp) : ty exp =
   match e.exp_of with
   | EInt    i   ->  { e with exp_of = EInt i;   ety_of = TyInt }
@@ -79,8 +75,15 @@ let rec tycheck (gamma : ty_env) (e : 'a exp) : ty exp =
   | ERef x  ->  let x' = tycheck gamma x in {e with exp_of = ERef x';   ety_of = TyRef x'.ety_of}
   | EUnop (u, e1)      -> tycheck_unop e gamma u e1
   | EBinop (b, e1, e2) -> tycheck_binop e gamma b e1 e2
-  (* | EIf    ->  raise_ty_err "Unimplemented" *)
-  | ELet (i, e1, e2)    -> let e1' = tycheck gamma e1 in
+  | EIf (e1, e2, e3)  ->  let e1' = assert_ty gamma e1 TyBool in
+                          let e2' = tycheck gamma e2 in
+                          let e3' = assert_ty gamma e3 e2'.ety_of in
+                          { e with 
+                            exp_of = EIf(e1', e2', e3');
+                            ety_of = e3'.ety_of
+                          }
+
+  | ELet (i, e1, e2)  ->  let e1' = tycheck gamma e1 in
                           let e2' = tycheck (Symtab.set i e1'.ety_of gamma) e2 in (*Should have some sort of check for bounding errors*)
                           {e with 
                             exp_of = ELet(i, e1', e2');
