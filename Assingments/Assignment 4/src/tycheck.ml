@@ -155,81 +155,82 @@ and tycheck_unop (e : 'a exp) (gamma : ty_env) (u : unop) (e2 : 'a exp) : ty exp
                   }
   | UDeref  ->  let e' = tycheck gamma e2 in (*BEFORE WE TURN IN, FIGURE OUT HOW OTHER PEOPLE SOLVED THIS, WE NO ABLE TO SOLVE CUZ DUMB*)
                   (match e'.ety_of with 
-                    | TyRef(e2) -> 
+                    | TyRef(x) -> 
                                 { e with
-                                    exp_of = EUnop(u, e');
-                                    ety_of = e2
+                                  exp_of = EUnop(u, e');
+                                  ety_of = x
                                 }
-                    | e -> raise_ty_err "Expected reference type!"
+                    | x -> raise_ty_err "Expected reference type!"
                   )
 
 		  
 and tycheck_binop (e : 'a exp) (gamma : ty_env) (b : binop) (e1 : 'a exp) (e2 : 'a exp) : ty exp =
     match b with
-    | BPlus   ->    let e1' = assert_arith gamma e1 in
-                    let e2' = assert_arith gamma e2 in
-                    if ty_eq e1'.ety_of e2'.ety_of then 
-                    { e with
-                      exp_of = EBinop(b, e1', e2');
-                      ety_of = e1'.ety_of
-                    }
-                    else raise_ty_err "Expected BPlus"
-
-    | BMinus   ->   let e1' = assert_arith gamma e1 in
-                    let e2' = assert_arith gamma e2 in
-                    if ty_eq e1'.ety_of e2'.ety_of then 
-                    { e with
-                      exp_of = EBinop(b, e1', e2');
-                      ety_of = e1'.ety_of
-                    }
-                    else raise_ty_err "Expected BMinus"
-
-    | BTimes   ->   let e1' = assert_arith gamma e1 in
-                    let e2' = assert_arith gamma e2 in
-                    if ty_eq e1'.ety_of e2'.ety_of then 
-                    { e with
-                      exp_of = EBinop(b, e1', e2');
-                      ety_of = e1'.ety_of
-                    }
-                   else raise_ty_err "Expected BTimes"
-
-    | BDiv   ->     let e1' = assert_arith gamma e1 in
-                    let e2' = assert_arith gamma e2 in
-                    if ty_eq e1'.ety_of e2'.ety_of then 
-                    { e with
-                      exp_of = EBinop(b, e1', e2');
-                      ety_of = e1'.ety_of
-                    }
-                    else raise_ty_err "Expected BDiv"
-
-
-    | BAnd   ->   let e1' = assert_ty gamma e1 TyBool in
-                  let e2' = assert_ty gamma e2 TyBool in
+    | BPlus ->  let e1' = assert_arith gamma e1 in
+                let e2' = assert_arith gamma e2 in
+                if ty_eq e1'.ety_of e2'.ety_of then 
+                { e with
+                  exp_of = EBinop(b, e1', e2');
+                  ety_of = e1'.ety_of
+                }
+                else raise_ty_err "Expected BPlus"
+    (* A lot of copy and pasting for these! *)
+    | BMinus  ->  let e1' = assert_arith gamma e1 in
+                  let e2' = assert_arith gamma e2 in
                   if ty_eq e1'.ety_of e2'.ety_of then 
                   { e with
                     exp_of = EBinop(b, e1', e2');
-                    ety_of = TyBool
+                    ety_of = e1'.ety_of
                   }
-                  else raise_ty_err "Expected BAnd"
+                  else raise_ty_err "Expected BMinus"
 
-    | BOr   ->   let e1' = assert_ty gamma e1 TyBool in
-                  let e2' = assert_ty gamma e2 TyBool in
+    | BTimes  ->  let e1' = assert_arith gamma e1 in
+                  let e2' = assert_arith gamma e2 in
                   if ty_eq e1'.ety_of e2'.ety_of then 
                   { e with
                     exp_of = EBinop(b, e1', e2');
-                    ety_of = TyBool
+                    ety_of = e1'.ety_of
                   }
-                  else raise_ty_err "Expected BOr"
+                 else raise_ty_err "Expected BTimes"
 
-    | BLt   ->   let e1' = assert_arith gamma e1 in
-                    let e2' = assert_arith gamma e2 in
-                    if ty_eq e1'.ety_of e2'.ety_of then 
-                    { e with
-                      exp_of = EBinop(b, e1', e2');
-                      ety_of = TyBool
-                    }
-                   else raise_ty_err "Expected BLt"
-    | BIntEq   ->   let e1' = assert_ty gamma e1 TyInt in
+    | BDiv  ->  let e1' = assert_arith gamma e1 in
+                let e2' = assert_arith gamma e2 in
+                if ty_eq e1'.ety_of e2'.ety_of then 
+                { e with
+                  exp_of = EBinop(b, e1', e2');
+                  ety_of = e1'.ety_of
+                }
+                else raise_ty_err "Expected BDiv"
+
+
+    | BAnd  ->  let e1' = assert_ty gamma e1 TyBool in
+                let e2' = assert_ty gamma e2 TyBool in
+                if ty_eq e1'.ety_of e2'.ety_of then 
+                { e with
+                  exp_of = EBinop(b, e1', e2');
+                  ety_of = TyBool
+                }
+                else raise_ty_err "Expected BAnd"
+
+    | BOr   ->  let e1' = assert_ty gamma e1 TyBool in
+                let e2' = assert_ty gamma e2 TyBool in
+                if ty_eq e1'.ety_of e2'.ety_of then 
+                { e with
+                  exp_of = EBinop(b, e1', e2');
+                  ety_of = TyBool
+                }
+                else raise_ty_err "Expected BOr"
+
+    | BLt   ->  let e1' = assert_arith gamma e1 in
+                let e2' = assert_arith gamma e2 in
+                if ty_eq e1'.ety_of e2'.ety_of then 
+                { e with
+                  exp_of = EBinop(b, e1', e2');
+                  ety_of = TyBool
+                }
+               else raise_ty_err "Expected BLt"
+
+    | BIntEq  ->  let e1' = assert_ty gamma e1 TyInt in
                   let e2' = assert_ty gamma e2 TyInt in
                   if ty_eq e1'.ety_of e2'.ety_of then 
                   { e with
@@ -237,7 +238,16 @@ and tycheck_binop (e : 'a exp) (gamma : ty_env) (b : binop) (e1 : 'a exp) (e2 : 
                     ety_of = TyBool
                   }
                   else raise_ty_err "Expected BOr"
-    | BUpdate ->   raise_ty_err "Unimplemented update"          
+
+    | BUpdate ->  let e1' = tycheck gamma e2 in 
+                  (match e1'.ety_of with 
+                    | TyRef(x) -> let e2' = assert_ty gamma e2 x in
+                                { e with
+                                  exp_of = EBinop(b, e1', e2');
+                                  ety_of = TyUnit
+                                }
+                    | y -> raise_ty_err "Expected reference type!"
+                  )      
 
 
 (** [tycheck_fundef f]:
@@ -245,11 +255,14 @@ and tycheck_binop (e : 'a exp) (gamma : ty_env) (b : binop) (e1 : 'a exp) (e2 : 
     Returns a type-annotated version of [f]. *)
 	 
 let tycheck_fundef (f : (ty, 'a exp) fundef) : (ty, ty exp) fundef =
-  raise_ty_err "Unimplemented fundef"          
+  raise_ty_err "Unimplemented fundef"         
+
 
 (** [tycheck_prog p]:
     Checks that program [p] is well-typed. 
     Returns a type-annotated version of [p]. *)
-		  
+(* Given by Alexander Bagnall in the Piazza group chat *)
 let tycheck_prog (p : (ty, 'a exp) prog) : (ty, ty exp) prog =
-  raise_ty_err "Unimplemented prog"            
+  let typ = tycheck (Symtab.create ()) p.result in
+  { fundefs = [];
+    result = typ }
