@@ -274,13 +274,10 @@ let tycheck_fundef (f : (ty, 'a exp) fundef) : (ty, ty exp) fundef =
     Returns a type-annotated version of [p]. *)
 (* Given by Alexander Bagnall in the Piazza group chat *)
 let tycheck_prog (p : (ty, 'a exp) prog) : (ty, ty exp) prog =
-<<<<<<< HEAD
   let typ = tycheck (Symtab.create ()) p.result in
   { fundefs = [];
     result = typ }
-=======
   raise_ty_err "Unimplemented prog"            
 
 (* Using algorithm found on stack overflow *)
 let size l = mylist.fold_left (fun acc _ -> acc + 1) 0 l;;
->>>>>>> d45ea80ab917a41d2f8221518c618605f28d8ecb
