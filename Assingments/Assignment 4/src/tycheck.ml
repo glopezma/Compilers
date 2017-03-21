@@ -72,15 +72,16 @@ let rec tycheck (gamma : ty_env) (e : 'a exp) : ty exp =
                   | Some t -> { e with exp_of = EId x; ety_of = t })
   | ESeq ((_ :: _) as e2) ->  let (head, tail) = 
                             (match BatList.rev e2 with 
-                            | [] -> raise_ty_err "Can't have an empty list, Bro!"
-                            | (head::tail) -> (tail, head) )
-                            in let head' = BatList.map (fun e -> assert_ty gamma e TyUnit)
-                            (BatList.rev head) in
-                            let tail' = tycheck gamma tail in
-                            { e with 
-                              exp_of = ESeq ( head' @  [tail'] );
-                              ety_of = tail'.ety_of
-                            }
+                              | [] -> raise_ty_err "Can't have an empty list, Bro!"
+                              | (head::tail) -> (tail, head) )
+                              in let head' = BatList.map (fun e -> assert_ty gamma e TyUnit)
+                              (BatList.rev head) in
+                              let tail' = tycheck gamma tail in
+                              { e with 
+                                exp_of = ESeq ( head' @  [tail'] );
+                                ety_of = tail'.ety_of
+                              }
+  | ESeq [] -> raise_ty_err "Did you think you could get this past us?!? COME ON!!!"
 
   (*Fix later because this is too close to Nathan's and Bailey's answer *)
   | ECall (x, y)  ->  let (argList, argType) = ety_of_funid x in
@@ -288,8 +289,20 @@ let tycheck_fundef (f : (ty, 'a exp) fundef) : (ty, ty exp) fundef =
 (** [tycheck_prog p]:
     Checks that program [p] is well-typed. 
     Returns a type-annotated version of [p]. *)
+
 (* Given by Alexander Bagnall in the Piazza group chat *)
 let tycheck_prog (p : (ty, 'a exp) prog) : (ty, ty exp) prog =
-  let typ = tycheck (Symtab.create ()) p.result in
+  delta := Symtab.create(); 
+  delta := Symtab.set (Id "putchar") ([TyInt], TyInt) !delta;
+  let fundefs = p.fundefs in 
+  (* let x = BatList.sort_unique 
+  (fun f1 f2 -> if f1 = f2 then raise_ty_err "Error in Prog" else (-1)) fundefs in(* may not work *)
+  let () = BatList.iter fundefs in 
+  List.iter (delta := fundefs (List.map (fun something -> something.ty_of) fundefs.args) fundefs.ret_ty);
+   *)
+  let fun' = List.map tycheck_fundef fundefs in 
+  let t' = tycheck (Symtab.create()) p.result in 
+  {fundefs = fun'; result = t'}
+  (* let typ = tycheck (Symtab.create ()) p.result in
   { fundefs = [];
-    result = typ }
+    result = typ } *)

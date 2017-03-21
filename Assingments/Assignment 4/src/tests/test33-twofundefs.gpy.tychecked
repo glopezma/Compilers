@@ -1,3 +1,7 @@
-
-(tt : unit)
+def f(x : int) : int {
+ (x : int)
+}def g(x : int) : int {
+  (x : int)
+}
+(g((f((3 : int)) : int)) : int)
 

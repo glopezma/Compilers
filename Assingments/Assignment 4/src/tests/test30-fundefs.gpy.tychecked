@@ -1,3 +1,5 @@
-
-(tt : unit)
+def f(x : int) : int {
+ (x : int)
+}
+(f((0 : int)) : int)
 
